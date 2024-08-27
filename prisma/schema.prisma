@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    String @id @default(uuid())
+  email String @unique
+
+  name String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  amountFiat   Float
+  fiatCurrency String // e.g., "USD", "EUR"
+
+  fiatPayment     FiatPayment?
+  aptosConversion AptosConversion?
+
+  status TransactionStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FiatPayment {
+  id String @id @default(uuid())
+
+  transactionId String      @unique
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+
+  gatewayId  String
+  amountPaid Float
+
+  status PaymentStatus @default(PENDING)
+
+  paidAt DateTime?
+}
+
+model AptosConversion {
+  id String @id @default(uuid())
+
+  transactionId String      @unique
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+
+  aptosAmount    Float
+  conversionRate Float
+
+  convertedAt DateTime @default(now())
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
