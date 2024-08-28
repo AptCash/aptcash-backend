@@ -1,6 +1,9 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { CreatePaypalDto } from './dto/create-paypal.dto';
-import { UpdatePaypalDto } from './dto/update-paypal.dto';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { CheckoutDTO } from './dto/checkout.dto';
 import * as braintree from 'braintree';
 
 type Environment = 'Sandbox' | 'Production';
@@ -29,6 +32,36 @@ export class PaypalService {
 
       throw new InternalServerErrorException(
         'Error generating braintree client token',
+      );
+    }
+  }
+
+  async processTransaction({ nonce, toAddress, aptAmount }: CheckoutDTO) {
+    if (!nonce || !toAddress || !aptAmount) {
+      throw new BadRequestException('Missing required fields');
+    }
+
+    try {
+      // TODO: Calculate the amount based on the aptAmount
+      const payment = await this.gateway.transaction.sale({
+        amount: '10',
+        paymentMethodNonce: nonce,
+        options: {
+          submitForSettlement: true,
+        },
+      });
+
+      if (!payment.success) {
+        throw new InternalServerErrorException('Payment failed');
+      }
+
+      // TODO: Send APT to the toAddress
+      return { message: 'Payment successful' };
+    } catch (err) {
+      console.log(err);
+
+      throw new InternalServerErrorException(
+        err?.message ?? 'Error processing payment',
       );
     }
   }
