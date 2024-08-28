@@ -1,26 +1,35 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreatePaypalDto } from './dto/create-paypal.dto';
 import { UpdatePaypalDto } from './dto/update-paypal.dto';
+import * as braintree from 'braintree';
+
+type Environment = 'Sandbox' | 'Production';
 
 @Injectable()
 export class PaypalService {
-  create(createPaypalDto: CreatePaypalDto) {
-    return 'This action adds a new paypal';
+  private gateway: braintree.BraintreeGateway;
+
+  constructor() {
+    this.gateway = new braintree.BraintreeGateway({
+      environment:
+        braintree.Environment[process.env.BRAINTREE_ENVIRONMENT as Environment],
+      merchantId: process.env.BRAINTREE_MERCHANT_ID as string,
+      publicKey: process.env.BRAINTREE_PUBLIC_KEY as string,
+      privateKey: process.env.BRAINTREE_PRIVATE_KEY as string,
+    });
   }
 
-  findAll() {
-    return `This action returns all paypal`;
-  }
+  async getClientToken() {
+    try {
+      const res = await this.gateway.clientToken.generate({});
 
-  findOne(id: number) {
-    return `This action returns a #${id} paypal`;
-  }
+      return res.clientToken;
+    } catch (err) {
+      console.log(err);
 
-  update(id: number, updatePaypalDto: UpdatePaypalDto) {
-    return `This action updates a #${id} paypal`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} paypal`;
+      throw new InternalServerErrorException(
+        'Error generating braintree client token',
+      );
+    }
   }
 }
