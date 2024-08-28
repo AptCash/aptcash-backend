@@ -1,12 +1,9 @@
 import { IsString, IsNumber } from 'class-validator';
 
-export class CheckoutDTO {
-  @IsString()
-  nonce: string;
-
+export class SendTransactionDTO {
   @IsString()
   toAddress: string;
 
   @IsNumber()
-  aptAmount: number;
+  amount: number;
 }
