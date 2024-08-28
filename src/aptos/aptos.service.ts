@@ -28,7 +28,7 @@ export class AptosService {
 
     // const transaction = await this.aptos.fundAccount({
     //   accountAddress: this.account.accountAddress,
-    //   amount: 100,
+    //   amount: 50000000,
     // });
 
     return {
@@ -43,7 +43,7 @@ export class AptosService {
       sender: this.account.accountAddress,
       data: {
         function: '0x1::aptos_account::transfer',
-        functionArguments: [toAddress, amount],
+        functionArguments: [toAddress, (amount * 100_000_000).toString()],
       },
     });
 

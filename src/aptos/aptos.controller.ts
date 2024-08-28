@@ -6,7 +6,7 @@ import { SendTransactionDTO } from './dto/send-transaction.dto';
 export class AptosController {
   constructor(private readonly aptosService: AptosService) {}
 
-  @Get()
+  @Get('account/data')
   getAccountData() {
     return this.aptosService.getAccountData();
   }
