@@ -27,6 +27,7 @@
     "@nestjs/serve-static": "^4.0.2",
     "@nestjs/swagger": "^7.4.0",
     "@prisma/client": "5.18.0",
+    "braintree": "^3.24.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"
   },

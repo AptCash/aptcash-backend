@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { PaypalModule } from './paypal/paypal.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { join } from 'path';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'client'),
     }),
+    PaypalModule,
   ],
   controllers: [AppController],
   providers: [AppService],
