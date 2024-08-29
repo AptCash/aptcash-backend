@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { AptosService } from './aptos.service';
 import { SendTransactionDTO } from './dto/send-transaction.dto';
 
@@ -9,6 +9,17 @@ export class AptosController {
   @Get('account/data')
   getAccountData() {
     return this.aptosService.getAccountData();
+  }
+
+  @Get('convert/:fiat/:amount')
+  async aptToUsd(
+    @Param('fiat') fiat: 'usd' | 'inr',
+    @Param('amount') amount: number,
+  ) {
+    return this.aptosService.aptToFiat({
+      amountInApt: amount,
+      to: fiat,
+    });
   }
 
   @Post('send')

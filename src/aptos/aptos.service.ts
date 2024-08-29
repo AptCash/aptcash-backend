@@ -6,8 +6,14 @@ import {
   Ed25519PrivateKey,
   Network,
 } from '@aptos-labs/ts-sdk';
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { SendTransactionDTO } from './dto/send-transaction.dto';
+import axios, { AxiosError } from 'axios';
+import { AptToFiatDTO } from './dto/apt-to-fiat.dto';
 
 @Injectable()
 export class AptosService {
@@ -57,6 +63,44 @@ export class AptosService {
       senderAuthenticator,
     });
 
-    return committedTransaction;
+    const executedTransaction = await this.aptos.waitForTransaction({
+      transactionHash: committedTransaction.hash,
+    });
+
+    return executedTransaction;
+  }
+
+  async getAptosPrice() {
+    try {
+      const res = await axios.get(
+        `https://api.coingecko.com/api/v3/simple/price?ids=aptos&vs_currencies=usd,inr&x_cg_demo_api_key=${process.env.COIN_GECKO_API_KEY}`,
+      );
+
+      return res.data as {
+        aptos: {
+          usd: number;
+          inr: number;
+        };
+      };
+    } catch (e: any) {
+      const error = e as AxiosError;
+      throw new InternalServerErrorException(
+        error.response.data ?? 'Failed to get aptos price',
+      );
+    }
+  }
+
+  async aptToFiat({ amountInApt, to }: AptToFiatDTO) {
+    const {
+      aptos: { inr, usd },
+    } = await this.getAptosPrice();
+
+    if (to === 'usd') {
+      return amountInApt * usd;
+    } else if (to === 'inr') {
+      return amountInApt * inr;
+    }
+
+    throw new BadRequestException('Invalid fiat currency');
   }
 }
