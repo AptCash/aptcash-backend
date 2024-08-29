@@ -12,14 +12,14 @@ model User {
   email    String @unique
   password String @default("")
 
-  apiKey String @unique
+  apiKey        String  @unique
+  walletAddress String
+  name          String?
 
-  name String?
+  transactions Transaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  transactions Transaction[]
 }
 
 model Transaction {
@@ -40,12 +40,12 @@ model Transaction {
 model FiatPayment {
   id String @id @default(uuid())
 
-  transactionId String      @unique
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
-
   gatewayId    String
   amountPaid   Float
   fiatCurrency String
+
+  transactionId String      @unique
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
 
   status FiatPaymentStatus @default(PENDING)
 
@@ -55,12 +55,12 @@ model FiatPayment {
 model AptosPayment {
   id String @id @default(uuid())
 
-  transactionId String      @unique
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
-
   aptosAmount        Float
   conversionCurrency String
   conversionRate     Float
+
+  transactionId String      @unique
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
 
   convertedAt DateTime @default(now())
 }

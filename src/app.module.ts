@@ -6,6 +6,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PaypalModule } from './paypal/paypal.module';
 import { AptosModule } from './aptos/aptos.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AptosModule } from './aptos/aptos.module';
     }),
     PaypalModule,
     AptosModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
