@@ -76,6 +76,8 @@ export class PaypalService {
           amountPaid: parseFloat(payment.transaction.amount),
           fiatCurrency: payment.transaction.currencyIsoCode,
           transactionId: transaction.id,
+          status: payment.success ? 'COMPLETED' : 'FAILED',
+          paidAt: new Date(payment.transaction.createdAt),
         },
       });
 

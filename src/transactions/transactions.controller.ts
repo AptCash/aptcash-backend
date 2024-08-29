@@ -1,5 +1,8 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Req } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { AuthRequest } from 'types';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('transactions')
 export class TransactionsController {
@@ -15,8 +18,10 @@ export class TransactionsController {
     return this.transactionsService.findById(id);
   }
 
-  @Get('user/:id')
-  findByUser(@Param('id') id: string) {
-    return this.transactionsService.findByUser(id);
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth('access-token')
+  @Get('user/all')
+  findByUser(@Param('id') id: string, @Req() req: AuthRequest) {
+    return this.transactionsService.findByUser(req.user.id);
   }
 }
