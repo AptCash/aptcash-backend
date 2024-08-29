@@ -6,6 +6,8 @@ import {
 import { CheckoutDTO } from './dto/checkout.dto';
 import * as braintree from 'braintree';
 import { AptosService } from 'src/aptos/aptos.service';
+import { TransactionsService } from 'src/transactions/transactions.service';
+import { PrismaService } from 'src/prisma.service';
 
 type Environment = 'Sandbox' | 'Production';
 
@@ -13,7 +15,11 @@ type Environment = 'Sandbox' | 'Production';
 export class PaypalService {
   private gateway: braintree.BraintreeGateway;
 
-  constructor(private readonly aptosService: AptosService) {
+  constructor(
+    private readonly aptosService: AptosService,
+    private readonly transactionsService: TransactionsService,
+    private readonly prisma: PrismaService,
+  ) {
     this.gateway = new braintree.BraintreeGateway({
       environment:
         braintree.Environment[process.env.BRAINTREE_ENVIRONMENT as Environment],
@@ -42,27 +48,36 @@ export class PaypalService {
       throw new BadRequestException('Missing required fields');
     }
 
+    const userId = '9e363e6b-5358-452b-98fa-617fb1e496c3';
+
     try {
-      const usdAmount = await this.aptosService.aptToFiat({
+      // Converted Aptos to USD
+      const fiatAmount = await this.aptosService.aptToFiat({
         amountInApt: aptAmount,
         to: 'usd',
       });
 
-      console.log(`USD Amount: ${usdAmount}`);
+      // Created new Transaction in database
+      const transaction = await this.transactionsService.create({ userId });
 
-      // Create new Transaction
-
+      // Processed Payment
       const payment = await this.gateway.transaction.sale({
-        amount: usdAmount.toFixed(2).toString(),
+        amount: fiatAmount.toFixed(2).toString(),
         paymentMethodNonce: nonce,
         options: {
           submitForSettlement: true,
         },
       });
 
-      // Add FiatPayment to Transaction
-
-      // console.log(payment);
+      // Add FiatPayment details to Transaction
+      const fiatPayment = await this.prisma.fiatPayment.create({
+        data: {
+          gatewayId: payment.transaction.id,
+          amountPaid: parseFloat(payment.transaction.amount),
+          fiatCurrency: payment.transaction.currencyIsoCode,
+          transactionId: transaction.id,
+        },
+      });
 
       if (!payment.success) {
         throw new InternalServerErrorException('Payment failed');
@@ -70,18 +85,41 @@ export class PaypalService {
 
       console.log(`Payment ID: ${payment.transaction.id}`);
 
-      // Add Aptos to Transaction
-
+      // Execute Aptos Txn
       const txn = await this.aptosService.sendTransaction({
         amount: aptAmount,
         toAddress,
       });
 
+      // Save AptosPayment details to Transaction
+      const aptosPayment = await this.prisma.aptosPayment.create({
+        data: {
+          txHash: txn.hash,
+          aptosAmount: aptAmount,
+          conversionCurrency: payment.transaction.currencyIsoCode,
+          conversionRate: fiatAmount / aptAmount,
+          transactionId: transaction.id,
+        },
+      });
+
       console.log(`Transaction ID: ${txn.hash}`);
 
-      // Update Status of Transactions
+      // Mark Transaction as complete
+      await this.prisma.transaction.update({
+        where: {
+          id: transaction.id,
+        },
+        data: {
+          status: 'COMPLETED',
+        },
+      });
 
-      return { message: 'Payment successful', txHash: txn.hash };
+      return {
+        message: 'Payment processed successfully',
+        id: transaction.id,
+        gatewayId: fiatPayment.gatewayId,
+        txHash: txn.hash,
+      };
     } catch (err) {
       console.log(err);
 
