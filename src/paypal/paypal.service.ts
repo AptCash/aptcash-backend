@@ -50,6 +50,8 @@ export class PaypalService {
 
       console.log(`USD Amount: ${usdAmount}`);
 
+      // Create new Transaction
+
       const payment = await this.gateway.transaction.sale({
         amount: usdAmount.toFixed(2).toString(),
         paymentMethodNonce: nonce,
@@ -57,6 +59,8 @@ export class PaypalService {
           submitForSettlement: true,
         },
       });
+
+      // Add FiatPayment to Transaction
 
       // console.log(payment);
 
@@ -66,12 +70,16 @@ export class PaypalService {
 
       console.log(`Payment ID: ${payment.transaction.id}`);
 
+      // Add Aptos to Transaction
+
       const txn = await this.aptosService.sendTransaction({
         amount: aptAmount,
         toAddress,
       });
 
       console.log(`Transaction ID: ${txn.hash}`);
+
+      // Update Status of Transactions
 
       return { message: 'Payment successful', txHash: txn.hash };
     } catch (err) {
