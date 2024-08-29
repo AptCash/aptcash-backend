@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { CheckoutDTO } from './dto/checkout.dto';
 import * as braintree from 'braintree';
+import { AptosService } from 'src/aptos/aptos.service';
 
 type Environment = 'Sandbox' | 'Production';
 
@@ -12,7 +13,7 @@ type Environment = 'Sandbox' | 'Production';
 export class PaypalService {
   private gateway: braintree.BraintreeGateway;
 
-  constructor() {
+  constructor(private readonly aptosService: AptosService) {
     this.gateway = new braintree.BraintreeGateway({
       environment:
         braintree.Environment[process.env.BRAINTREE_ENVIRONMENT as Environment],
@@ -42,21 +43,37 @@ export class PaypalService {
     }
 
     try {
-      // TODO: Calculate the amount based on the aptAmount
+      const usdAmount = await this.aptosService.aptToFiat({
+        amountInApt: aptAmount,
+        to: 'usd',
+      });
+
+      console.log(`USD Amount: ${usdAmount}`);
+
       const payment = await this.gateway.transaction.sale({
-        amount: '10',
+        amount: usdAmount.toFixed(2).toString(),
         paymentMethodNonce: nonce,
         options: {
           submitForSettlement: true,
         },
       });
 
+      // console.log(payment);
+
       if (!payment.success) {
         throw new InternalServerErrorException('Payment failed');
       }
 
-      // TODO: Send APT to the toAddress
-      return { message: 'Payment successful' };
+      console.log(`Payment ID: ${payment.transaction.id}`);
+
+      const txn = await this.aptosService.sendTransaction({
+        amount: aptAmount,
+        toAddress,
+      });
+
+      console.log(`Transaction ID: ${txn.hash}`);
+
+      return { message: 'Payment successful', txHash: txn.hash };
     } catch (err) {
       console.log(err);
 
