@@ -15,6 +15,7 @@ model User {
   apiKey        String  @unique
   walletAddress String
   name          String?
+  avatar        String?
 
   transactions Transaction[]
 
@@ -28,8 +29,8 @@ model Transaction {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
-  fiatPayment     FiatPayment?
-  aptosConversion AptosPayment?
+  fiatPayment  FiatPayment?
+  aptosPayment AptosPayment?
 
   status TransactionStatus @default(PENDING)
 
@@ -53,7 +54,8 @@ model FiatPayment {
 }
 
 model AptosPayment {
-  id String @id @default(uuid())
+  id     String @id @default(uuid())
+  txHash String @unique
 
   aptosAmount        Float
   conversionCurrency String
