@@ -7,6 +7,7 @@ import { join } from 'path';
 import { PaypalModule } from './paypal/paypal.module';
 import { AptosModule } from './aptos/aptos.module';
 import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UserModule } from './user/user.module';
     PaypalModule,
     AptosModule,
     UserModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
