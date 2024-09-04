@@ -48,6 +48,12 @@ export class PaypalService {
       throw new BadRequestException('Missing required fields');
     }
 
+    if (aptAmount <= 0 || isNaN(aptAmount) || aptAmount >= 0.05) {
+      throw new BadRequestException(
+        'For testing purposes, we have restricted the amount between 0.01-0.05',
+      );
+    }
+
     const userId = '9e363e6b-5358-452b-98fa-617fb1e496c3';
 
     try {
