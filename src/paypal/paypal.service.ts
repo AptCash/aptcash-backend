@@ -48,7 +48,7 @@ export class PaypalService {
       throw new BadRequestException('Missing required fields');
     }
 
-    const userId = 'a3fda601-476c-467b-836f-5666268ebd63';
+    const userId = '9e363e6b-5358-452b-98fa-617fb1e496c3';
 
     try {
       // Converted Aptos to USD
